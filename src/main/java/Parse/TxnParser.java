@@ -7,14 +7,15 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+//This class handles the parsing of JSON objects and turns them into Java objects
 public class TxnParser {
 
     public enum etherScanTxnEnum{
         NormalTxn, ERC20Txn, InternalTxn
     }
 
-    private AbstractEtherscanTxn deserializeJSON(String str, etherScanTxnEnum TxnEnum) {
-        switch (TxnEnum) {
+    private AbstractEtherscanTxn deserializeJSON(String str, etherScanTxnEnum txnEnum) {
+        switch (txnEnum) {
             case NormalTxn:
                 return new Gson().fromJson(str, EtherscanNormalTxn.class);
             case ERC20Txn:
@@ -25,11 +26,13 @@ public class TxnParser {
         return null;
     }
 
-    //To Do:
-    //Implement StringBuilder to take in ETH address and Etherscan API key from console in MainEntry.java
+    //TODO:
+    //  Implement StringBuilder to take in ETH address and Etherscan API key from console in MainEntry.java
+    //  API requests will only return 10000 transactions only, if there is more need another more specific request
     public AbstractEtherscanTxn httpRequest(etherScanTxnEnum txnEnum){
         String uri = "";
         switch (txnEnum){
+            //For development purposes, use default API key. Will require user input for API key in the future.
             case NormalTxn:
                 uri = "http://api.etherscan.io/api?module=account&action=txlist&address=0x2032caAE5f25e61E79FaFCDBf53B6D1F1c483ec9&startblock=0&endblock=99999999&sort=asc&apikey=FDE2GYHDIWC3W85J4JFCTSQIDJIHTNA676";
                 break;
