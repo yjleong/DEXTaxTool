@@ -1,11 +1,19 @@
 package Process;
-//This class defines what
+//This class defines balances with necessary information to determine cost basis
 public class Balance {
     public long numOfUnits; //Number of units of specific ticker
     public double price;    //
     public long dateEpoch;
     public String dateISO8601;
 
+    Balance (long numOfUnits, long dateEpoch){
+        this.numOfUnits = numOfUnits;
+        this.dateEpoch = dateEpoch;
+        //TODO:
+        //  As part of initialization, get price and determine dates
+        //getPrice();
+        //convertDate();
+    }
     public void getPrice() {
         //TODO:
         //  Implement getting of price from CoinBase
