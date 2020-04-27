@@ -1,31 +1,75 @@
 package Process;
+
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.text.SimpleDateFormat;
+
+import MiscObj.StaticObjects;
+import com.google.gson.Gson;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+
 //This class defines balances with necessary information to determine cost basis
 public class Balance {
-    public long numOfUnits; //Number of units of specific ticker
-    public double price;    //
+    public long numOfUnits; //Number of units of specific ticker, in 10^18 units
+    public double price;    //in USD
     public long dateEpoch;
     public String dateISO8601;
 
-    Balance (long numOfUnits, long dateEpoch){
+    public Balance(long numOfUnits, long dateEpoch, String ticker){
         this.numOfUnits = numOfUnits;
         this.dateEpoch = dateEpoch;
-        //TODO:
-        //  As part of initialization, get price and determine dates
-        //getPrice();
-        //convertDate();
+        this.dateISO8601 = convertEpochToISO8601();
+        getPrice(ticker);
     }
-    public void getPrice() {
+    public void getPrice(String ticker) {
         //TODO:
         //  Implement getting of price from CoinBase
         // GET URI = https://api.pro.coinbase.com/products/ETH-USD/candles?start=2020-03-29T01:07Z&end=2020-03-29T01:08Z&granularity=60
         // start and end are in ISO 8601 format, granularity is in seconds, will return array of array mix of int and double
         //  Implement getting price from Uniswap if not directly available from Coinbase
-//        this.price = ;
+        if(StaticObjects.CBProTickers.contains(ticker)) {
+            String uri = getURI(ticker);
+            //Create client
+            HttpClient client = HttpClient.newHttpClient();
+            //Build request
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri)).build();
+            //send request, asynchrously and tell server that want to receive as string
+            String str = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    //once asynch is done, want to apply method in parenthesis to the result, this is a lambda expression with :: sign
+                    //use body method in HttpResponse class on the result (i.e. get the result)
+                    .thenApply(HttpResponse::body)
+                    //join is returning the result from CompletableFuture.
+                    .join();
+            //Returns two dimentional array that contains one array in [time, low, high,open,close,volume]
+            double[][] priceArr = new Gson().fromJson(str, double[][].class);
+            //Get average the price
+            this.price = (priceArr[0][1] + priceArr[0][2] + priceArr[0][3] + priceArr[0][4])/4;
+        }
+        else{
+            //TODO: Implement method to get price by scanning DEX for any traded ETH at a similar time period
+            // in mean time, possibly throw a statement to end program?
+            System.out.println("Can't get fair price for token because it is directly available from public APIs. Will not be able to process transactions");
+        }
     }
 
-    public String convertDate(String dateEpochOrISO8601){
-        //TODO: Implement method to convert date time formats between epoch and ISO 8601
-        return "Date in correct format";
+    private String getURI(String ticker) {
+        return new StringBuilder("https://api.pro.coinbase.com/products/").append(ticker)
+                .append("-USD/candles?start=").append(dateISO8601).append("&end=").append(dateISO8601)
+                .append("&granularity=60").toString();
+    }
+
+    public String convertEpochToISO8601(){
+        //Format for ISO8601 for API GET request
+        String format = "yyyy-MM-dd'T'HH:mm'Z'";
+        SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(new Date(this.dateEpoch * 1000));
     }
 
 

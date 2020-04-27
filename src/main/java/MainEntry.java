@@ -6,10 +6,7 @@ import Process.TxnProcessor;
 import Process.Balance;
 import MiscObj.StaticObjects;
 
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 public class MainEntry {
 
@@ -58,7 +55,10 @@ public class MainEntry {
             System.out.println("Begin processing transactions");
             TxnProcessor txnProcessor = new TxnProcessor();
             //TODO: Ask user to input initial balances or determine initial balance before financial year going in
-            //For MVP purpose, initial balance for financial year is zero
+            //For MVP purpose, initial balance for financial year 0.3 ETH (init balance of ETH address being examined)
+            Queue<Balance> tempBalance= new LinkedList<Balance>();
+            tempBalance.add(new Balance(300000000000000000L,1582259618, "ETH"));
+            HashMap<String, Queue<Balance>> tempInitBalance = new HashMap<String, Queue<Balance>>();
             txnProcessor.setInitBalances(new HashMap<>());
 
 
