@@ -1,5 +1,6 @@
 package Process;
 
+import java.sql.Time;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -12,28 +13,31 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.TimeUnit;
 
 
 //This class defines balances with necessary information to determine cost basis
 public class Balance {
-    public long numOfUnits; //Number of units of specific ticker, in 10^18 units
+    public double numOfUnits; //Number of units of specific ticker, in 10^18 units
     public double price;    //in USD
     public long dateEpoch;
     public String dateISO8601;
+    public String ticker;
 
-    public Balance(long numOfUnits, long dateEpoch, String ticker){
+    public Balance(double numOfUnits, long dateEpoch, String ticker) throws Exception {
         this.numOfUnits = numOfUnits;
         this.dateEpoch = dateEpoch;
         this.dateISO8601 = convertEpochToISO8601();
+        this.ticker = ticker;
         getPrice(ticker);
     }
-    public void getPrice(String ticker) {
+    public void getPrice(String ticker) throws Exception {
         //TODO:
         //  Implement getting of price from CoinBase
         // GET URI = https://api.pro.coinbase.com/products/ETH-USD/candles?start=2020-03-29T01:07Z&end=2020-03-29T01:08Z&granularity=60
         // start and end are in ISO 8601 format, granularity is in seconds, will return array of array mix of int and double
         //  Implement getting price from Uniswap if not directly available from Coinbase
-        if(StaticObjects.CBProTickers.contains(ticker)) {
+        if(StaticObjects.CBProTickers.containsKey(ticker)) {
             String uri = getURI(ticker);
             //Create client
             HttpClient client = HttpClient.newHttpClient();
@@ -46,22 +50,34 @@ public class Balance {
                     .thenApply(HttpResponse::body)
                     //join is returning the result from CompletableFuture.
                     .join();
+            //Max rate is 3 request per second so wait for a little bit to not go over rate
+            TimeUnit.MILLISECONDS.sleep(300);
             //Returns two dimentional array that contains one array in [time, low, high,open,close,volume]
-            double[][] priceArr = new Gson().fromJson(str, double[][].class);
-            //Get average the price
-            this.price = (priceArr[0][1] + priceArr[0][2] + priceArr[0][3] + priceArr[0][4])/4;
+            //TODO: Can exceed public rate of request from CBPro and might crash program
+            // Figure out way to get around that
+            try {
+                double[][] priceArr = new Gson().fromJson(str, double[][].class);
+                //TODO: Consider better way of determining price, check message
+                // figure out how to deal with messages too, maybe try parse that first?
+                //Get average price
+                this.price = (priceArr[0][1] + priceArr[0][2] + priceArr[0][3] + priceArr[0][4])/4;
+            }
+            catch (Exception e){
+                System.out.println("Failed to get price from CBPro. String returned: " + str);
+                throw e;
+            }
         }
         else{
             //TODO: Implement method to get price by scanning DEX for any traded ETH at a similar time period
             // in mean time, possibly throw a statement to end program?
-            System.out.println("Can't get fair price for token because it is directly available from public APIs. Will not be able to process transactions");
+            throw new Exception("Can't get fair price for token because it is directly available from public APIs. Will not be able to process transactions");
         }
     }
 
     private String getURI(String ticker) {
-        return new StringBuilder("https://api.pro.coinbase.com/products/").append(ticker)
-                .append("-USD/candles?start=").append(dateISO8601).append("&end=").append(dateISO8601)
-                .append("&granularity=60").toString();
+        return "https://api.pro.coinbase.com/products/" + StaticObjects.CBProTickers.get(ticker) +
+                "/candles?start=" + dateISO8601 + "&end=" + dateISO8601 +
+                "&granularity=60";
     }
 
     public String convertEpochToISO8601(){
@@ -71,6 +87,4 @@ public class Balance {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         return sdf.format(new Date(this.dateEpoch * 1000));
     }
-
-
 }
