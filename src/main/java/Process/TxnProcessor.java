@@ -25,15 +25,15 @@ public class TxnProcessor {
                     //TODO Implement processing of transactions
                     if (StaticObjects.DEXEthAddresses.containsKey(normalTxn.to)) { //if txn is with a known uniswap contract, will not cover unknown but existing Uniswap contracts
                         String exchangeTicker = StaticObjects.DEXEthAddresses.get(normalTxn.to);
+                        //Add buy of token into balance
+                        if (!balances.containsKey(exchangeTicker)) { //check if there is already an existing balance for specific ticker
+                            //create new hashmap with the queue
+                            balances.put((exchangeTicker), new LinkedList<>());
+                        }
                         String txnHash = normalTxn.hash;
                         double txnVal = Double.parseDouble(normalTxn.value);
                         if (txnVal != 0d) {  //if txn moves ETH into contract, e.g. DAI-ETH pair (i.e. buy token, sell ETH)
-                            //Add buy of token into balance
                             //TODO: Refactor with generics to make code cleaner
-                            if (!balances.containsKey(exchangeTicker)) { //check if there is already an existing balance for specific ticker
-                                //create new hashmap with the queue
-                                balances.put((exchangeTicker), new LinkedList<>());
-                            }
                             //iterate through all erc20 txns and look for matching txn hash from normal txn
                             //get value and timestamp and save information transferred into account
                             // TODO: Use HashMap because runtime is O(k*n) at the moment and can make it O(n)
@@ -87,7 +87,13 @@ public class TxnProcessor {
                             }
                         }
                         else { //some other txn involving ERC-20 being sent to contract, e.g. ETH-DAI or MKR-DAI (i.e. buy ETH, sell token, or token to token trade)
+                            //Check internal transactions first for token for ETH txn (ETH-DAI or MKR-DAI), else if no existing internal txn, must be token for token txn
 
+                            for (ERC20Txn erc20Txn : etherscanERC20Txn.result){
+                                if (erc20Txn.hash.equals(txnHash)){
+
+                                }
+                            }
                         }
                     }
                 }

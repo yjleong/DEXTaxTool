@@ -52,7 +52,7 @@ public class MainEntry {
 
                 //Process transactions
                 System.out.println("Begin processing transactions");
-                TxnProcessor txnProcessor = new TxnProcessor();
+                TxnProcessor2 txnProcessor = new TxnProcessor2();
                 //TODO: Ask user to input initial balances or determine initial balance before financial year going in
                 //For MVP purpose, initial balance for financial year 0.3 ETH (init balance of ETH address being examined)
                 Queue<Balance> tempBalance = new LinkedList<Balance>();

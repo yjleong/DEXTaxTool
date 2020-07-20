@@ -11,12 +11,13 @@ public class StaticObjects {
         //Known Uniswap addresses and associated tokens
         DEXEthAddresses = new HashMap<>();
         DEXEthAddresses.put("0x2a1530c4c41db0b0b2bb646cb5eb1a67b7158667", "DAI");
+        DEXEthAddresses.put("0x2c4bd064b998838076fa341a83d007fc2fa50957", "MKR");
 
         //Known CoinbasePro directly available prices in USD
         CBProTickers = new HashMap<>();
         CBProTickers.put("ETH","ETH-USD");
-        CBProTickers.put("DAI", "ETH-USDC");
-        CBProTickers.put("MKR", "ETH-USDC");
+        CBProTickers.put("DAI", "DAI-USDC");
+        CBProTickers.put("MKR", "MKR-USD");
     }
 
 }

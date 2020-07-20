@@ -27,7 +27,7 @@ public class Balance {
     public Balance(double numOfUnits, long dateEpoch, String ticker) throws Exception {
         this.numOfUnits = numOfUnits;
         this.dateEpoch = dateEpoch;
-        this.dateISO8601 = convertEpochToISO8601();
+        this.dateISO8601 = convertEpochToISO8601(dateEpoch);
         this.ticker = ticker;
         getPrice(ticker);
     }
@@ -51,7 +51,7 @@ public class Balance {
                     //join is returning the result from CompletableFuture.
                     .join();
             //Max rate is 3 request per second so wait for a little bit to not go over rate
-            TimeUnit.MILLISECONDS.sleep(300);
+            TimeUnit.MILLISECONDS.sleep(400);
             //Returns two dimentional array that contains one array in [time, low, high,open,close,volume]
             //TODO: Can exceed public rate of request from CBPro and might crash program
             // Figure out way to get around that
@@ -63,28 +63,28 @@ public class Balance {
                 this.price = (priceArr[0][1] + priceArr[0][2] + priceArr[0][3] + priceArr[0][4])/4;
             }
             catch (Exception e){
-                System.out.println("Failed to get price from CBPro. String returned: " + str);
+                System.out.println("Failed to get price for: " + ticker + "\nFrom CBPro at: \n" + uri +"\n String returned: " + str);
                 throw e;
             }
         }
         else{
             //TODO: Implement method to get price by scanning DEX for any traded ETH at a similar time period
             // in mean time, possibly throw a statement to end program?
-            throw new Exception("Can't get fair price for token because it is directly available from public APIs. Will not be able to process transactions");
+            throw new Exception("Can't get fair price for token because it's not directly available from public APIs. Will not be able to process transactions");
         }
     }
 
     private String getURI(String ticker) {
         return "https://api.pro.coinbase.com/products/" + StaticObjects.CBProTickers.get(ticker) +
-                "/candles?start=" + dateISO8601 + "&end=" + dateISO8601 +
+                "/candles?start=" + this.dateISO8601 + "&end=" + convertEpochToISO8601(dateEpoch+60) +
                 "&granularity=60";
     }
 
-    public String convertEpochToISO8601(){
+    public String convertEpochToISO8601(long dateEpoch){
         //Format for ISO8601 for API GET request
         String format = "yyyy-MM-dd'T'HH:mm'Z'";
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.format(new Date(this.dateEpoch * 1000));
+        return sdf.format(new Date(dateEpoch * 1000));
     }
 }
